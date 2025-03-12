@@ -6,7 +6,18 @@ Created on Wed Mar  5 11:16:55 2025
 @author: maurerl
 """
 
-import copernicusmarine
+import copernicusmarine as cm
+import os 
+from dotenv import main
+
+
+main.load_dotenv()  # take environment variables from .env.
+cm.login(username = os.getenv("COPERNICUS_USERNAME"), password = os.getenv("COPERNICUS_PASSWORD"))
+
+
+
+
+
 #Using subset API to download some data for grappling with
 
 #dataset: string
@@ -22,7 +33,7 @@ import copernicusmarine
 #filename: string (.nc)
 
 def data_collect(dataset, var_list, min_lon, max_lon, min_lat, max_lat, start, end, min_depth, max_depth, filename):
-    copernicusmarine.subset(
+    cm.subset(
             dataset_id=dataset,
             variables=var_list,
             minimum_longitude=min_lon,
@@ -37,21 +48,9 @@ def data_collect(dataset, var_list, min_lon, max_lon, min_lat, max_lat, start, e
             output_directory = "copernicus-data")    
 
 
-
+#Example using chlrophyll a dataset
 data_collect("cmems_mod_nws_bgc-chl_my_7km-3D_P1M-m", ["mass_concentration_of_chlorophyll_a_in_sea_water"], -19.89, 13, 40.07, 65, "2023-01-01T00:00:00", "2024-01-01T00:00:00", 0, 5000, "chlr_a_month.nc" )
 
-# Bottom temperature
-#copernicusmarine.subset(
-#  dataset_id="cmems_mod_nws_phy-bottomt_my_7km-2D_PT1H-i",
-#  variables=["sea_water_potential_temperature_at_sea_floor"],
-#  minimum_longitude=-19.89,
-#  maximum_longitude=13,
-#  minimum_latitude=40.07,
-#  maximum_latitude=65,
-#  start_datetime="2022-01-01T00:00:00",
-#  end_datetime="2022-01-01T23:59:59",
-#  minimum_depth=0,
- # maximum_depth=24,
-#  output_filename = "bottomT_hr.nc",
- # output_directory = "copernicus-data"
-#)
+
+
+

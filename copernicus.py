@@ -16,8 +16,6 @@ cm.login(username = os.getenv("COPERNICUS_USERNAME"), password = os.getenv("COPE
 
 
 
-
-
 #Using subset API to download some data for grappling with
 
 #dataset: string
@@ -48,9 +46,6 @@ def data_collect(dataset, var_list, min_lon, max_lon, min_lat, max_lat, start, e
             output_directory = "copernicus-data")    
 
 
-#Example using chlrophyll a dataset
-data_collect("cmems_mod_nws_bgc-chl_my_7km-3D_P1M-m", ["mass_concentration_of_chlorophyll_a_in_sea_water"], -19.89, 13, 40.07, 65, "2023-01-01T00:00:00", "2024-01-01T00:00:00", 0, 5000, "chlr_a_month.nc" )
-
-
+#xarray merge?
 
 

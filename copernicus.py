@@ -46,6 +46,15 @@ def data_collect(dataset, var_list, min_lon, max_lon, min_lat, max_lat, start, e
             output_directory = "copernicus-data")    
 
 
-#xarray merge?
 
+def data_collect2(dataset, var_list, min_lon, max_lon, min_lat, max_lat, filename):
+    cm.subset(
+            dataset_id=dataset,
+            variables=var_list,
+            minimum_longitude=min_lon,
+            maximum_longitude=max_lon,
+            minimum_latitude=min_lat,
+            maximum_latitude=max_lat,
+            output_filename = filename,
+            output_directory = "copernicus-data")    
 

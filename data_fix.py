@@ -2,7 +2,8 @@ import xarray as xr
 import numpy as np
 
 #Import physical data files
-vel = xr.open_dataset('copernicus-data/vel.nc')
+uvel = xr.open_dataset('copernicus-data/uvel.nc')
+vvel = xr.open_dataset('copernicus-data/vvel.nc')
 temp = xr.open_dataset('copernicus-data/temp.nc')
 salt = xr.open_dataset('copernicus-data/salinity.nc')
 botT = xr.open_dataset('copernicus-data/botT.nc')
@@ -20,7 +21,8 @@ spco2 = xr.open_dataset('copernicus-data/spco2.nc')
 ph = xr.open_dataset('copernicus-data/ph.nc')
 
 #Drop depth in all files
-vel = vel.drop_vars("depth")
+uvel = uvel.drop_vars("depth")
+vvel = vvel.drop_vars("depth")
 temp = temp.drop_vars("depth")
 salt = salt.drop_vars("depth")
 chl = chl.drop_vars("depth")
@@ -33,19 +35,24 @@ ph = ph.drop_vars("depth")
 
 #force velocity to have the same lat and lon as tempearture
 #temperature matches the rest of the files
-vel['latitude'] = temp['latitude']
-vel['longitude'] = temp['longitude']
+uvel['latitude'] = temp['latitude']
+uvel['longitude'] = temp['longitude']
+
+vvel['longitude'] = temp['longitude']
+vvel['latitude'] = temp['latitude']
 
 
 #Create land mask
 land_mask = np.isnan(temp['thetao'][0,:,:])
 land_mask = land_mask.rename('land_mask')
 land = np.where(land_mask == True, 1, 0)[0]
-land = xr.DataArray(land, dims=('latitude', 'longitude'), coords={'latitude': temp['latitude'], 'longitude': temp['longitude']})
+land = xr.DataArray(land, dims=('latitude', 'longitude'), coords={'latitude': temp['latitude'], 'longitude': temp['longitude']} )
+land = land.expand_dims(time = temp.time)
 land.to_netcdf('copernicus-data/land_mask.nc')
 
 #Update nc
-vel.to_netcdf('copernicus-data/vel_update.nc')
+uvel.to_netcdf('copernicus-data/uvel_update.nc')
+vvel.to_netcdf('copernicus-data/vvel_update.nc')
 temp.to_netcdf('copernicus-data/temp_update.nc')
 salt.to_netcdf('copernicus-data/salinity_update.nc')
 botT.to_netcdf('copernicus-data/botT_update.nc')

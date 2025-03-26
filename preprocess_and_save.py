@@ -227,21 +227,21 @@ def main(years = "ALL"):
     endpoint = os.getenv("S3_ENDPOINT")
 
     base_paths = [
-        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-uv_my_7km-3D_P1M-m_202012",
+        "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-uv_my_7km-3D_P1M-m_202012",
         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-t_my_7km-3D_P1M-m_202012",
         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-s_my_7km-3D_P1M-m_202012",
-        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-bottomt_my_7km-2D_P1M-m_202012",
+        "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-bottomt_my_7km-2D_P1M-m_202012",
         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-mld_my_7km-2D_P1M-m_202012",
-        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-ssh_my_7km-2D_P1M-m_202012",
-        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-kd_my_7km-3D_P1M-m_202012",
-        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-chl_my_7km-3D_P1M-m_202012",
-        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-o2_my_7km-3D_P1M-m_202012",
-        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-no3_my_7km-3D_P1M-m_202012",
-        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-po4_my_7km-3D_P1M-m_202012",
-        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-phyc_my_7km-3D_P1M-m_202012",
-        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-pp_my_7km-3D_P1M-m_202012",
-        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-spco2_my_7km-2D_P1M-m_202012",
-        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-ph_my_7km-3D_P1M-m_202012",
+         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-ssh_my_7km-2D_P1M-m_202012",
+         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-kd_my_7km-3D_P1M-m_202012",
+         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-chl_my_7km-3D_P1M-m_202012",
+         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-o2_my_7km-3D_P1M-m_202012",
+         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-no3_my_7km-3D_P1M-m_202012",
+         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-po4_my_7km-3D_P1M-m_202012",
+         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-phyc_my_7km-3D_P1M-m_202012",
+         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-pp_my_7km-3D_P1M-m_202012",
+         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-spco2_my_7km-2D_P1M-m_202012",
+         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-ph_my_7km-3D_P1M-m_202012",
         #TODO: add bathymetry
     ]
 

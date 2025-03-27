@@ -47,34 +47,34 @@ print(f"Coordinates: {ds.coords}")  # Shows coordinate names
 print(f"Attributes: {ds.attrs}")  # Shows global dataset metadata #NOTE: metadata (consolidated metadata) not supported in zarr3
 print(f"Chunks: {ds.chunks}")  # Shows chunk sizes for each variable
 
-#print("--------------------")
-#print("Zarr group info:")
-## zgroup = zarr.open(store=local_storage, mode="r")
-#zgroup = zarr.open(store=s3_store, mode="r")
-#print(zgroup)
-#print(zgroup.tree())  # Shows Zarr group hierarchy
-#print(zgroup.info)  # General Zarr group info
-#print(json.dumps(dict(zgroup.attrs), indent=4))  # a #NOTE metadata (consolidated metadata) not supported in zarr3
-#print(zgroup["data"].chunks)  # Check if chunks exist
-#
-##
-## -------------------- Chunk Calculations --------------------
-#print("--------------------")
-#print("Chunk Calculations:")
-#data_array = zgroup["data"]
-#total_shape = data_array.shape  # (variable, time, latitude, longitude)
-#chunk_shape = data_array.chunks
-#num_chunks_per_dim = [np.ceil(tot / ch).astype(int) for tot, ch in zip(total_shape, chunk_shape)]
-#total_chunks = np.prod(num_chunks_per_dim)
-#
-## Compute chunk size in MB
-#chunk_size_bytes = np.prod(chunk_shape) * np.dtype(data_array.dtype).itemsize
-#chunk_size_mb = chunk_size_bytes / (1024 * 1024)
-#
-## Print results
-#print(f"Total Shape: {total_shape}")
-#print(f"Chunk Shape: {chunk_shape}")
-#print(f"Number of Chunks per Dimension: {num_chunks_per_dim}")  
-#print(f"Total Chunks: {total_chunks}")
-#print(f"Chunk Size: {chunk_size_mb:.2f} MB")
+print("--------------------")
+print("Zarr group info:")
+# zgroup = zarr.open(store=local_storage, mode="r")
+zgroup = zarr.open(store=s3_store, mode="r")
+print(zgroup)
+print(zgroup.tree())  # Shows Zarr group hierarchy
+print(zgroup.info)  # General Zarr group info
+print(json.dumps(dict(zgroup.attrs), indent=4))  # a #NOTE metadata (consolidated metadata) not supported in zarr3
+print(zgroup["data"].chunks)  # Check if chunks exist
+
+# #
+# -------------------- Chunk Calculations --------------------
+print("--------------------")
+print("Chunk Calculations:")
+data_array = zgroup["data"]
+total_shape = data_array.shape  # (variable, time, latitude, longitude)
+chunk_shape = data_array.chunks
+num_chunks_per_dim = [np.ceil(tot / ch).astype(int) for tot, ch in zip(total_shape, chunk_shape)]
+total_chunks = np.prod(num_chunks_per_dim)
+
+# Compute chunk size in MB
+chunk_size_bytes = np.prod(chunk_shape) * np.dtype(data_array.dtype).itemsize
+chunk_size_mb = chunk_size_bytes / (1024 * 1024)
+
+# Print results
+print(f"Total Shape: {total_shape}")
+print(f"Chunk Shape: {chunk_shape}")
+print(f"Number of Chunks per Dimension: {num_chunks_per_dim}")  
+print(f"Total Chunks: {total_chunks}")
+print(f"Chunk Size: {chunk_size_mb:.2f} MB")
 

@@ -68,40 +68,40 @@ spco2.to_netcdf('../copernicus-data/spco2_update.nc')
 ph.to_netcdf('../copernicus-data/ph_update.nc')    
 
 
-
-#upload gebco bathymetry netcdf 
+# Resample bathymetry to match chlorophyll dataset resolution
 bathy = xr.open_dataset('../gebco/GEBCO_26_Mar_2025_ab0e873a5abc/gebco_2024_n65.0346_s40.0333_w-19.9444_e13.0552.nc')
-# Resample the bathy dataset to match the coarser resolution of the chlr dataset. This doesnt match the coordinates right though
-#mean
-#disregarding the edges, lon_factor = 26, lat_factor = 16
-blat = np.asarray(bathy.lat)
-blon = np.asarray(bathy.lon)
-clat = np.asarray(chl.latitude)
-clon = np.asarray(chl.longitude)
+bathy = bathy.where(bathy.elevation <= 0, 0)  # Set land elevation to 0
 
-# 2D course via mean
-bathy_mean = np.empty((clat.shape[0],clon.shape[0]))
+# Define target grid based on chlorophyll dataset
+target_lat = chl.latitude
+target_lon = chl.longitude
 
-bathy = np.asarray(bathy.elevation)
-bathy =  np.where(bathy > 0, 0, bathy) #get rid of land
+# Use xarray's coarsen method to aggregate bathymetry data
+lat_factor = len(bathy.lat) // len(target_lat)
+lon_factor = len(bathy.lon) // len(target_lon)
 
-for i in range(1,len(clon)):
-     for j in range(1,len(clat)):
-         lonmin = np.argwhere((blon > clon[i-1])).min()
-         lonmax = np.argwhere((blon <= clon[i])).max()
-         latmin = np.argwhere((blat > clat[j-1])).min()
-         latmax = np.argwhere((blat <= clat[j])).max()
-         
-         bathy_mean[j,i] = np.nanmean(bathy.elevation[latmin:latmax, lonmin:lonmax])
-         bathy_max[j,i] =  np.nanmax(bathy.elevation[latmin:latmax, lonmin:lonmax])
-         bathy_min[j,i] =  np.nanmin(bathy.elevation[latmin:latmax, lonmin:lonmax])
-         bathy_std[j,i] =  np.nanmin(bathy.elevation[latmin:latmax, lonmin:lonmax])
-         
-         
+bathy_coarse = bathy.coarsen(lat=lat_factor, lon=lon_factor, boundary="pad")
+bathy_mean = bathy_coarse.mean().elevation.rename("mean bathymetry")
+bathy_max = bathy_coarse.max().elevation.rename("minimum depth")
+bathy_min = bathy_coarse.min().elevation.rename("maximum depth")
+bathy_std = bathy_coarse.std().elevation.rename("std bathymetry")
+
+# Align the coarse bathymetry with the chlorophyll dataset grid
+bathy_mean = bathy_mean.interp(lat=target_lat, lon=target_lon)
+bathy_max = bathy_max.interp(lat=target_lat, lon=target_lon)
+bathy_min = bathy_min.interp(lat=target_lat, lon=target_lon)
+bathy_std = bathy_std.interp(lat=target_lat, lon=target_lon)
 
 
-#land mask? 
-         
+bathy_mean = bathy_mean.drop_vars(["lat", "lon"])
+bathy_max = bathy_max.drop_vars(["lat", "lon"])
+bathy_min = bathy_min.drop_vars(["lat", "lon"])
+bathy_std = bathy_std.drop_vars(["lat", "lon"])
 
 
+# Save the results
+bathy_mean.to_netcdf('../copernicus-data/bathy_mean.nc')
+bathy_max.to_netcdf('../copernicus-data/bathy_max.nc')
+bathy_min.to_netcdf('../copernicus-data/bathy_min.nc')
+bathy_std.to_netcdf('../copernicus-data/bathy_std.nc')
 

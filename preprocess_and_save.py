@@ -86,7 +86,32 @@ def velocity_fix(vel_path, comp_path, years, storage, key, secret, endpoint, jso
     return ds_vel
     
 
-    
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Bring in the bathymetry ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def bathymetry_fix(bathymetry_path, ds_time):
+    """
+    After bringing in the data, we need to add a time dimension in xarray. 
+    Bathymetry will not change in time.
+    """
+
+    #from local files, bring in bathymetry (bathymetry_path = ~/oceanos/copernicus-data)
+    #TODO: make this neater
+    bathy_mean = xr.open_dataset(f"{bathymetry_path}/bathy_mean.nc")
+    bathy_max = xr.open_dataset(f"{bathymetry_path}/bathy_max.nc")
+    bathy_min = xr.open_dataset(f"{bathymetry_path}/bathy_min.nc")  
+    bathy_std = xr.open_dataset(f"{bathymetry_path}/bathy_std.nc")
+
+    #add time dimension to the bathymetry datasets
+    #take time from ds_time = ds_vel
+    bathy_mean = bathy_mean.expand_dims(time = ds_time.time)
+    bathy_max = bathy_max.expand_dims(time = ds_time.time)
+    bathy_min = bathy_min.expand_dims(time = ds_time.time)
+    bathy_std = bathy_std.expand_dims(time = ds_time.time)
+
+    #merge the bathymetry datasets
+    ds_bathymetry = xr.merge([bathy_mean, bathy_max, bathy_min, bathy_std])
+
+
+    return ds_bathymetry
 
 # ---------------------------- DATA LOADING -----------------------------------
     
@@ -126,7 +151,9 @@ def load_data_for_years(base_paths, years, storage, key, secret, endpoint, json_
     comp_path = "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-t_my_7km-3D_P1M-m_202012"
       
     ds_vel = velocity_fix(vel_path, comp_path, years, storage, key=key, secret=secret, endpoint=endpoint, json_path="variable_mapping.json")
-#
+
+    print("✅ Velocity fixed.")
+
     #create land mask 
     land_mask = np.isnan(ds_vel['uo'][0,:,:])
     land_mask = land_mask.rename('land_mask')
@@ -135,9 +162,13 @@ def load_data_for_years(base_paths, years, storage, key, secret, endpoint, json_
     land = land.expand_dims(time = ds_vel.time)
     ds_land = land.to_dataset(name = 'land')
     #merge the fixed velocity with the rest of the variables and the land mask 
-    
-    ds = xr.merge([ds_, ds_vel, ds_land])  #throwing in land made this unhappy with upload. I might put in land mask later??
-    
+    print("✅ Land mask created.")    
+
+    ds_bathymetry = bathymetry_fix("../copernicus-data", ds_vel)
+
+    print("✅ Bathymetry included.")
+
+    ds = xr.merge([ds_, ds_vel, ds_land, ds_bathymetry])  # Merge datasets
 
     # Drop depth dimension if present (select first layer)
     if "depth" in ds.dims:
@@ -145,14 +176,14 @@ def load_data_for_years(base_paths, years, storage, key, secret, endpoint, json_
 
     print("✅ Data loaded and combined.")
 
-    fs = fsspec.filesystem(
-        "s3",
-        key=key,
-        secret=secret,
-        client_kwargs={"endpoint_url": "https://foundationmodel-v1.tor1.digitaloceanspaces.com"}, #NOTE: endpoint more complete because it needs write access
-        # client_kwargs={"endpoint_url": endpoint},
-        asynchronous=False # Enable async mode for working with Dask or other async libraries
-    )
+    # fs = fsspec.filesystem(
+    #     "s3",
+    #     key=key,
+    #     secret=secret,
+    #     client_kwargs={"endpoint_url": "https://foundationmodel-v1.tor1.digitaloceanspaces.com"}, #NOTE: endpoint more complete because it needs write access
+    #     # client_kwargs={"endpoint_url": endpoint},
+    #     asynchronous=False # Enable async mode for working with Dask or other async libraries
+    # )
 
     # Stack variables into variable dimension
     var_names = list(ds.data_vars.keys())
@@ -204,7 +235,7 @@ def save_to_zarr_v3(ds, storage_path, chunks, key, secret, endpoint):
 
     ds.to_zarr(
         store=s3_store,
-        mode="w", # overwrite existing file if there is one
+        mode="w", #overwrite existing file if there is one
         zarr_format=3,
         consolidated=False, # NOTE metadata not supported in zarr v3 so consolidated metadata is not supported
     )
@@ -226,23 +257,23 @@ def main(years = "ALL"):
     secret = os.getenv("S3_SECRET")
     endpoint = os.getenv("S3_ENDPOINT")
 
+#delete velocity since that's dealt with later
+#bathymetry created locally but uploaded and finished in the fix function above
     base_paths = [
-        "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-uv_my_7km-3D_P1M-m_202012",
         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-t_my_7km-3D_P1M-m_202012",
         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-s_my_7km-3D_P1M-m_202012",
-        "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-bottomt_my_7km-2D_P1M-m_202012",
-        "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-mld_my_7km-2D_P1M-m_202012",
-         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-ssh_my_7km-2D_P1M-m_202012",
-         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-kd_my_7km-3D_P1M-m_202012",
-         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-chl_my_7km-3D_P1M-m_202012",
-         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-o2_my_7km-3D_P1M-m_202012",
-         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-no3_my_7km-3D_P1M-m_202012",
-         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-po4_my_7km-3D_P1M-m_202012",
-         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-phyc_my_7km-3D_P1M-m_202012",
-         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-pp_my_7km-3D_P1M-m_202012",
-         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-spco2_my_7km-2D_P1M-m_202012",
-         "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-ph_my_7km-3D_P1M-m_202012",
-        #TODO: add bathymetry
+        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-bottomt_my_7km-2D_P1M-m_202012",
+        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-mld_my_7km-2D_P1M-m_202012",
+        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_PHY_004_009/cmems_mod_nws_phy-ssh_my_7km-2D_P1M-m_202012",
+        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-kd_my_7km-3D_P1M-m_202012",
+        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-chl_my_7km-3D_P1M-m_202012",
+        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-o2_my_7km-3D_P1M-m_202012",
+        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-no3_my_7km-3D_P1M-m_202012",
+        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-po4_my_7km-3D_P1M-m_202012",
+        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-phyc_my_7km-3D_P1M-m_202012",
+        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-pp_my_7km-3D_P1M-m_202012",
+        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-spco2_my_7km-2D_P1M-m_202012",
+        # "s3://mdl-native-13/native/NWSHELF_MULTIYEAR_BGC_004_011/cmems_mod_nws_bgc-ph_my_7km-3D_P1M-m_202012",
     ]
 
     # Determine year range
@@ -262,11 +293,20 @@ def main(years = "ALL"):
 
     try:
         # Define chunking strategy (adjust as needed)
-        chunks = {"variable": 4, "time": 12, "latitude": 32, "longitude": 32}
+        chunks = {"time": 12, "latitude": 32, "longitude": 32}
 
         # Load dataset
         ds = load_data_for_years(base_paths, year_range, storage_path, key=key, secret=secret, endpoint=endpoint, json_path="variable_mapping.json")
-        save_to_zarr_v3(ds, zarr_path, chunks, key=key, secret=secret, endpoint=endpoint)
+
+        # Save each variable as an individual Zarr file
+        for var_name in ds.data_vars:
+            # Convert integer variable names to strings for file paths
+            var_name_str = str(var_name)  # Ensure variable name is a string
+            var_ds = ds[[var_name]]  # Select the variable as a new dataset
+            var_storage_path = f"{storage_path}{var_name_str}.zarr"
+
+            print(f"📦 Saving variable '{var_name_str}' to {var_storage_path}")
+            save_to_zarr_v3(var_ds, var_storage_path, chunks, key, secret, endpoint)
 
     finally:
         client.close()
@@ -274,4 +314,4 @@ def main(years = "ALL"):
 
 if __name__ == "__main__":
     main(years=2020)  
-    # main(years="ALL")  
+    # main(years="ALL")

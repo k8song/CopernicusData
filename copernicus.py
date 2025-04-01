@@ -12,9 +12,7 @@ from dotenv import main
 
 
 main.load_dotenv()  # take environment variables from .env.
-cm.login(username = os.getenv("COPERNICUS_USERNAME"), password = os.getenv("COPERNICUS_PASSWORD"))
-
-
+cm.login(username=os.getenv("COPERNICUS_USERNAME"), password=os.getenv("COPERNICUS_PASSWORD"))
 
 #Using subset API to download some data for grappling with
 
@@ -43,18 +41,7 @@ def data_collect(dataset, var_list, min_lon, max_lon, min_lat, max_lat, start, e
             minimum_depth=min_depth,
             maximum_depth=max_depth,
             output_filename = filename,
-            output_directory = "copernicus-data")    
+            output_directory = "../copernicus-data")    
 
 
-
-def data_collect2(dataset, var_list, min_lon, max_lon, min_lat, max_lat, filename):
-    cm.subset(
-            dataset_id=dataset,
-            variables=var_list,
-            minimum_longitude=min_lon,
-            maximum_longitude=max_lon,
-            minimum_latitude=min_lat,
-            maximum_latitude=max_lat,
-            output_filename = filename,
-            output_directory = "copernicus-data")    
 

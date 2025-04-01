@@ -2,57 +2,56 @@ import xarray as xr
 import numpy as np
 
 #Import physical data files
-uvel = xr.open_dataset('../copernicus-data/uvel.nc')
-vvel = xr.open_dataset('../copernicus-data/vvel.nc')
-temp = xr.open_dataset('../copernicus-data/temp.nc')
-salt = xr.open_dataset('../copernicus-data/salinity.nc')
-botT = xr.open_dataset('../copernicus-data/botT.nc')
-mld = xr.open_dataset('../copernicus-data/mld.nc')
-ssh = xr.open_dataset('../copernicus-data/ssh.nc')
+uvel = xr.open_dataset('../copernicus-data/uvel2.nc')
+# vvel = xr.open_dataset('../copernicus-data/vvel2.nc')
+temp = xr.open_dataset('../copernicus-data/temp2.nc')
+salt = xr.open_dataset('../copernicus-data/salinity2.nc')
+botT = xr.open_dataset('../copernicus-data/botT2.nc')
+mld = xr.open_dataset('../copernicus-data/mld2.nc')
+ssh = xr.open_dataset('../copernicus-data/ssh2.nc')
 
 #Import chemical data files
-chl = xr.open_dataset('../copernicus-data/chl.nc')
-o2 = xr.open_dataset('../copernicus-data/o2.nc')
-no3 = xr.open_dataset('../copernicus-data/no3.nc')
-po4 = xr.open_dataset('../copernicus-data/po4.nc')
-phyc = xr.open_dataset('../copernicus-data/phyc.nc')
-pp = xr.open_dataset('../copernicus-data/pp.nc')
-spco2 = xr.open_dataset('../copernicus-data/spco2.nc')
-ph = xr.open_dataset('../copernicus-data/ph.nc')
+chl = xr.open_dataset('../copernicus-data/chl2.nc')
+o2 = xr.open_dataset('../copernicus-data/o22.nc')
+no3 = xr.open_dataset('../copernicus-data/no32.nc')
+po4 = xr.open_dataset('../copernicus-data/po42.nc')
+phyc = xr.open_dataset('../copernicus-data/phyc2.nc')
+pp = xr.open_dataset('../copernicus-data/pp2.nc')
+spco2 = xr.open_dataset('../copernicus-data/spco22.nc')
+ph = xr.open_dataset('../copernicus-data/ph2.nc')
 
-#Drop depth in all files
-uvel = uvel.drop_vars("depth")
-vvel = vvel.drop_vars("depth")
-temp = temp.drop_vars("depth")
-salt = salt.drop_vars("depth")
-chl = chl.drop_vars("depth")
-o2 = o2.drop_vars("depth")
-no3 = no3.drop_vars("depth")
-po4 = po4.drop_vars("depth")
-phyc = phyc.drop_vars("depth")
-pp = pp.drop_vars("depth")
-ph = ph.drop_vars("depth")
+# #Drop depth in all files
+# uvel = uvel.drop_vars("depth")
+# vvel = vvel.drop_vars("depth")
+# temp = temp.drop_vars("depth")
+# salt = salt.drop_vars("depth")
+# chl = chl.drop_vars("depth")
+# o2 = o2.drop_vars("depth")
+# no3 = no3.drop_vars("depth")
+# po4 = po4.drop_vars("depth")
+# phyc = phyc.drop_vars("depth")
+# pp = pp.drop_vars("depth")
+# ph = ph.drop_vars("depth")
 
 #force velocity to have the same lat and lon as tempearture
 #temperature matches the rest of the files
-uvel['latitude'] = temp['latitude']
-uvel['longitude'] = temp['longitude']
+# uvel['latitude'] = temp['latitude']
+# uvel['longitude'] = temp['longitude']
 
-vvel['longitude'] = temp['longitude']
-vvel['latitude'] = temp['latitude']
 
 
 #Create land mask
-land_mask = np.isnan(temp['thetao'][0,:,:])
-land_mask = land_mask.rename('land_mask')
-land = np.where(land_mask == True, 1, 0)[0]
-land = xr.DataArray(land, dims=('latitude', 'longitude'), coords={'latitude': temp['latitude'], 'longitude': temp['longitude']} )
-land = land.expand_dims(time = temp.time)
+land_mask = np.isnan(chl['chl'][0,:,:])
+land_mask = np.where(land_mask, 0, 1)
+land = xr.DataArray(land_mask[0], dims=["latitude", "longitude"], coords={"latitude": chl.latitude, "longitude": chl.longitude})
+land = land.rename("land_mask")
 land.to_netcdf('../copernicus-data/land_mask.nc')
+
+
+
 
 #Update nc
 uvel.to_netcdf('../copernicus-data/uvel_update.nc')
-vvel.to_netcdf('../copernicus-data/vvel_update.nc')
 temp.to_netcdf('../copernicus-data/temp_update.nc')
 salt.to_netcdf('../copernicus-data/salinity_update.nc')
 botT.to_netcdf('../copernicus-data/botT_update.nc')
@@ -81,10 +80,10 @@ lat_factor = len(bathy.lat) // len(target_lat)
 lon_factor = len(bathy.lon) // len(target_lon)
 
 bathy_coarse = bathy.coarsen(lat=lat_factor, lon=lon_factor, boundary="pad")
-bathy_mean = bathy_coarse.mean().elevation.rename("mean bathymetry")
-bathy_max = bathy_coarse.max().elevation.rename("minimum depth")
-bathy_min = bathy_coarse.min().elevation.rename("maximum depth")
-bathy_std = bathy_coarse.std().elevation.rename("std bathymetry")
+bathy_mean = bathy_coarse.mean().elevation.rename("mean_bath")
+bathy_max = bathy_coarse.max().elevation.rename("min_depth")
+bathy_min = bathy_coarse.min().elevation.rename("max_depth")
+bathy_std = bathy_coarse.std().elevation.rename("std_bath")
 
 # Align the coarse bathymetry with the chlorophyll dataset grid
 bathy_mean = bathy_mean.interp(lat=target_lat, lon=target_lon)
@@ -104,4 +103,6 @@ bathy_mean.to_netcdf('../copernicus-data/bathy_mean.nc')
 bathy_max.to_netcdf('../copernicus-data/bathy_max.nc')
 bathy_min.to_netcdf('../copernicus-data/bathy_min.nc')
 bathy_std.to_netcdf('../copernicus-data/bathy_std.nc')
+
+
 

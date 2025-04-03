@@ -1,34 +1,69 @@
 import xarray as xr
 import numpy as np
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from shapely.geometry import Polygon
+from matplotlib.patches import Polygon as MplPolygon
+from matplotlib.collections import PatchCollection
+
+
+
 
 
 land = xr.open_dataset('../copernicus-data/land_mask.nc')
-land_zoom = land.sel(latitude=slice(50, 53), longitude=slice(-6, -4))
 
-#pcolor mesh so we think about the resolution more
-plt.figure()
-plt.pcolormesh(land_zoom.longitude, land_zoom.latitude, land_zoom.land_mask, shading='auto')
-plt.plot(-5.05, 51.7, 'x', color="red")
+land_zoom = land.sel(latitude=slice(51.6, 51.8), longitude=slice(-5.2, -4.75))
+#This is 3 latitudes and 4 longitudes
 
-uvel = xr.open_dataset('../copernicus-data/uvel_update.nc')
-uvel_zoom = uvel.sel(latitude=slice(50, 53), longitude=slice(-6, -4))
+indices = np.where(land_zoom.land_mask == 1)
 
+# Extract the corresponding latitude and longitude values
+latitudes = land_zoom.latitude.values[indices[0]]
+longitudes = land_zoom.longitude.values[indices[1]]
 
-plt.figure()
-plt.pcolormesh(uvel_zoom.longitude, uvel_zoom.latitude,  uvel_zoom.uo[0,0])
-plt.plot(-5.05, 51.7, 'x', color="red")
-
-
-ssh = xr.open_dataset('../copernicus-data/ssh_update.nc')
-ssh_zoom = ssh.sel(latitude=slice(50, 53), longitude=slice(-6, -4))
-plt.figure()
-plt.pcolormesh(ssh_zoom.longitude, ssh_zoom.latitude,  ssh_zoom.zos[0])
-plt.plot(-5.05, 51.7, 'x', color="red")
+# Combine latitudes and longitudes into a list of coordinates
+coordinates = list(zip(latitudes, longitudes))
+polygon = Polygon(coordinates)  #polyhon of coordinates
 
 
 
-"""
-  I am thinking about boundary conditions/effects for the oceanic variables near the coastlines.
-  Coastal vs non-coastal species as well?
-  Ideally not in an estuary? 
-  """
+# Create a figure with a geographic projection
+plt.figure(figsize=(8, 6))
+ax = plt.axes(projection=ccrs.PlateCarree())  # Use PlateCarree for lat/lon data
+
+# Plot the land mask
+plt.pcolormesh(
+    land_zoom.longitude, land_zoom.latitude, land_zoom.land_mask,
+    shading='auto', transform=ccrs.PlateCarree()
+)
+
+# Add the 'x' marker
+plt.plot(
+    -5.04, 51.7, 'x', markersize=10, markeredgewidth=4, color="red",
+    transform=ccrs.PlateCarree()
+)
+
+
+
+# Add a map of the UK (coastlines and borders)
+ax.coastlines(resolution='10m', color='magenta', linewidth=1)
+ax.add_feature(cfeature.BORDERS, linestyle=':', edgecolor='magenta')
+
+# Add gridlines for reference
+ax.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
+
+
+# Set the extent to match the extent of land_zoom
+ax.set_extent([-5.2, -4.75,
+               51.6, 51.8], crs=ccrs.PlateCarree())
+
+
+
+land_zoom = land.sel(latitude=slice(51.6, 51.8), longitude=slice(-5.2, -4.75))
+#This is 3 latitudes and 4 longitudes
+
+
+# Set the title and show the plot
+plt.title('Land Mask with Polygon')
+plt.show()
